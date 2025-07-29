@@ -1,9 +1,4 @@
 [project]
-name = "swdb-2025-connectomics"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.10"
 dependencies = [
     "caveclient>=7.11.0",
     "seaborn>=0.13.2",
@@ -11,11 +6,15 @@ dependencies = [
     "standard-transform>=1.4.0",
     "tqdm>=4.67.1",
 ]
+description = "SWDB 2025 Connectomics"
+name = "swdb-2025-connectomics"
+readme = "README.md"
+requires-python = ">=3.10"
+version = "0.1.0"
 
 [project.optional-dependencies]
-jupyter = [
-    "ipykernel>=6.30.0",
-]
+joblib = ["joblib>=1.5.1", "tqdm-joblib>=0.0.4"]
+jupyter = ["ipykernel>=6.30.0"]
 
 [tool.uv.sources]
 skeleton-plot = { git = "https://github.com/AllenInstitute/skeleton_plot.git" }

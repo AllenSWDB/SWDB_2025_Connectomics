@@ -3476,6 +3476,10 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+joblib = [
+    { name = "joblib" },
+    { name = "tqdm-joblib" },
+]
 jupyter = [
     { name = "ipykernel" },
 ]
@@ -3484,10 +3488,12 @@ jupyter = [
 requires-dist = [
     { name = "caveclient", specifier = ">=7.11.0" },
     { name = "ipykernel", marker = "extra == 'jupyter'", specifier = ">=6.30.0" },
+    { name = "joblib", marker = "extra == 'joblib'", specifier = ">=1.5.1" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "skeleton-plot", git = "https://github.com/AllenInstitute/skeleton_plot.git" },
     { name = "standard-transform", specifier = ">=1.4.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "tqdm-joblib", marker = "extra == 'joblib'", specifier = ">=0.0.4" },
 ]
 
 [[package]]
@@ -3658,6 +3664,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2", size = 78540 },
+]
+
+[[package]]
+name = "tqdm-joblib"
+version = "0.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/f8/f35c4bcc48408ef145634521f1603149613fd9ab89279b58df1e4fb17d3b/tqdm_joblib-0.0.4.tar.gz", hash = "sha256:8588e0d04aa5d51a0fae3ce68206045a8117ec695daddeaea3012dfd8869d2a5", size = 1692 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/a7/baca7170afdf872ec30385064cf03e50f6c047e315d854385a889ba6e803/tqdm_joblib-0.0.4-py3-none-any.whl", hash = "sha256:786f4423f2282701db7959a2b4449d1e3ab60b4841f5a6d03ec49e8cb8946e0b", size = 1718 },
 ]
 
 [[package]]
