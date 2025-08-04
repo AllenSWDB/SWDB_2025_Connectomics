@@ -1,8 +1,46 @@
 {
 	"version": 1,
-	"base_image": "codeocean/jupyterlab:3.6.1-miniconda4.12.0-python3.9-ubuntu20.04",
+	"base_image": "codeocean/py-r:python3.12.4-R4.3.3-JupyterLab4.2.4-RStudiorstudio-server-2024.04.2-764-ubuntu22.04",
 	"options": {
 		"registry_host_arg": true,
 		"git_ask_pass": true
+	},
+	"installers": {
+		"pip3": {
+			"packages": [
+				{
+					"name": "caveclient"
+				},
+				{
+					"name": "matplotlib"
+				},
+				{
+					"name": "numpy"
+				},
+				{
+					"name": "pandas"
+				},
+				{
+					"name": "pynwb"
+				},
+				{
+					"name": "scipy"
+				},
+				{
+					"name": "seaborn"
+				},
+				{
+					"name": "skeleton-plot"
+				},
+				{
+					"name": "standard-transform"
+				},
+				{
+					"name": "tqdm"
+				}
+			],
+			"options": {},
+			"pre_install_options": {}
+		}
 	}
 }
