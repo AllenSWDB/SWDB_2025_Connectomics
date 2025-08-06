@@ -230,19 +230,19 @@ def draw_box(ax, start, end, axis="x", color="black", alpha=0.5, lw=0.5):
     if axis == "x":
         rect = plt.Rectangle(
             (start, 0),
-            end - start,
+            end - start + 1,
             1,
             color=color,
         )
-        ax.axvline(start, lw=0.5, alpha=0.5, color="black", zorder=2)
+        ax.axvline(start - 0.5, lw=0.5, alpha=1, color="black", zorder=2)
     elif axis == "y":
         rect = plt.Rectangle(
             (0, start),
             1,
-            end - start,
+            end - start + 1,
             color=color,
         )
-        ax.axhline(start, lw=0.5, alpha=0.5, color="black", zorder=2)
+        ax.axhline(start - 0.5, lw=0.5, alpha=1, color="black", zorder=2)
     ax.add_patch(rect)
 
 
@@ -268,7 +268,7 @@ def adjacencyplot(
     ax: Optional[plt.Axes] = None,
     figsize: tuple = (8, 8),
     edge_size: bool = True,
-    edge_hue: bool = False,
+    edge_hue: bool = True,
     hue_norm: Optional[tuple] = None,
     sizes: tuple = (1, 10),
     edge_linewidth: float = 0.05,
@@ -398,7 +398,7 @@ def adjacencyplot(
     if ax is None:
         _, ax = plt.subplots(figsize=figsize)
 
-    if plot_type == 'heatmap':
+    if plot_type == "heatmap":
         if isinstance(adjacency, csr_array):
             # convert to dense for plotting
             adjacency = adjacency.todense()
@@ -406,7 +406,6 @@ def adjacencyplot(
         plot_adjacency[sources, targets] = data
         sns.heatmap(
             plot_adjacency,
-            # cmap=edge_palette,
             xticklabels=False,
             yticklabels=False,
             vmin=hue_norm[0] if hue_norm else None,
@@ -414,9 +413,11 @@ def adjacencyplot(
             ax=ax,
             square=True,
             cbar_kws={"label": "Synapse count", "shrink": 0.5},
+            cmap=edge_palette,
             **kwargs,
         )
-    elif plot_type == 'scattermap':
+        line_zorder = 2
+    elif plot_type == "scattermap":
         sns.scatterplot(
             y=sources,
             x=targets,
@@ -430,6 +431,7 @@ def adjacencyplot(
             color="black",
             **kwargs,
         )
+        line_zorder = -1
         if hue is not None or size is not None:
             sns.move_legend(
                 ax,
@@ -487,8 +489,8 @@ def adjacencyplot(
 
         for group_name, (start, end) in info.iterrows():
             if group_element == "box":
-                draw_box(cax_left, start, end, axis="y", color=node_palette[group_name])
-                draw_box(cax_top, start, end, axis="x", color=node_palette[group_name])
+                draw_box(cax_left, start + 0.5, end, axis="y", color=node_palette[group_name])
+                draw_box(cax_top, start + 0.5, end, axis="x", color=node_palette[group_name])
 
             elif group_element == "bracket":
                 draw_bracket(
@@ -498,12 +500,26 @@ def adjacencyplot(
                     cax_top, start, end, axis="x", color=node_palette[group_name]
                 )
 
-            ax.axhline(start, lw=0.5, alpha=0.5, color="black", zorder=-1)
-            ax.axvline(start, lw=0.5, alpha=0.5, color="black", zorder=-1)
+            ax.axhline(start, lw=0.5, alpha=0.5, color="black", zorder=line_zorder)
+            ax.axvline(start, lw=0.5, alpha=0.5, color="black", zorder=line_zorder)
 
             if end == (len(nodes) - 1):
-                ax.axhline(len(nodes), lw=0.5, alpha=0.5, color="black", clip_on=False)
-                ax.axvline(len(nodes), lw=0.5, alpha=0.5, color="black", clip_on=False)
+                ax.axhline(
+                    len(nodes),
+                    lw=0.5,
+                    alpha=0.5,
+                    color="black",
+                    clip_on=False,
+                    zorder=line_zorder,
+                )
+                ax.axvline(
+                    len(nodes),
+                    lw=0.5,
+                    alpha=0.5,
+                    color="black",
+                    clip_on=False,
+                    zorder=line_zorder,
+                )
 
         cax_left.set_yticks(means.values)
         ticklabels = cax_left.set_yticklabels(means.index, rotation=0, fontsize=8)
@@ -566,3 +582,50 @@ cell_type_palette = {
     "E": [0.72830947, 0.47437862, 0.46344404],
     "I": [0.28845568, 0.42566829, 0.52882005],
 }
+
+
+def check_index(
+    index: Union[pd.Index, pd.DataFrame, pd.Series, np.ndarray, list],
+) -> pd.Index:
+    if isinstance(index, (pd.DataFrame, pd.Series)):
+        index = index.index
+    elif isinstance(index, (np.ndarray, list)):
+        index = pd.Index(index)
+    else:
+        raise TypeError(
+            f"Index has to be of type pd.DataFrame, pd.Series, np.ndarray or list; got {type(index)}"
+        )
+    return index
+
+
+def filter_synapse_table(
+    synapse_table: pd.DataFrame, pre_root_ids=None, post_root_ids=None
+):
+    """Filter synapse table by pre and post root ids.
+
+    Args:
+        synapse_table: synapse table with pre_pt_root_ids and post_pt_root_ids as pd.DataFrame
+        pre_root_ids: np.ndarray, list or pd.Series if root_ids to filter on the presynaptic side
+        post_root_ids: np.ndarray, list or pd.Series if root_ids to filter on the postsynaptic side
+
+    Returns:
+        synapse_table: filtered synapse table
+    """
+
+    if pre_root_ids is not None:
+        assert isinstance(pre_root_ids, (np.ndarray, list, pd.core.series.Series)), (
+            f"IDs have to be of type np.ndarray, list or pd.Series; got {type(pre_root_ids)}"
+        )
+        pre_mask = np.isin(synapse_table["pre_pt_root_id"], pre_root_ids)
+    else:
+        pre_mask = np.ones(len(synapse_table), dtype=bool)
+
+    if post_root_ids is not None:
+        assert isinstance(post_root_ids, (np.ndarray, list, pd.core.series.Series)), (
+            f"IDs have to be of type np.ndarray, list or pd.Series; got {type(pre_root_ids)}"
+        )
+        post_mask = np.isin(synapse_table["post_pt_root_id"], post_root_ids)
+    else:
+        post_mask = np.ones(len(synapse_table), dtype=bool)
+
+    return synapse_table[pre_mask & post_mask]
