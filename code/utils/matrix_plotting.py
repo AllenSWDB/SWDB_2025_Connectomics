@@ -169,7 +169,7 @@ class AxisGrid:
         # float or in manual axes_size like pad = axes_size.from_any(
         #   pad, fraction_ref=axes_size.AxesX(self.ax)
         # )
-        pad = f"{pad * 100}%"
+        pad = f"{pad * 110}%"
         ax = self.divider.append_axes(side, size=size, pad=pad, **kwargs)
 
         clear_axis(ax)
@@ -258,6 +258,7 @@ def add_position_column(nodes, pos_key="position"):
 def adjacencyplot(
     adjacency: Union[np.ndarray, csr_array, pd.DataFrame],
     nodes: pd.DataFrame = None,
+    plot_type: Literal["heatmap", "scattermap"] = "heatmap",
     groupby: Optional[list[str]] = None,
     sortby: Optional[list[str]] = None,
     group_element: Literal["box", "bracket"] = "box",
@@ -381,13 +382,15 @@ def adjacencyplot(
 
     ranked_data = rankdata(data, method="average") / len(data)
 
+    # data = np.log(data)
+
     if edge_size:
         size = data
     else:
         size = None
 
     if edge_hue:
-        hue = ranked_data
+        hue = data
     else:
         hue = None
         edge_palette = None
@@ -395,20 +398,47 @@ def adjacencyplot(
     if ax is None:
         _, ax = plt.subplots(figsize=figsize)
 
-    sns.scatterplot(
-        y=sources,
-        x=targets,
-        size=size,
-        hue=hue,
-        hue_norm=hue_norm,
-        ax=ax,
-        legend=False,
-        sizes=sizes,
-        palette=edge_palette,
-        linewidth=edge_linewidth,
-        color="black",
-        **kwargs,
-    )
+    if plot_type == 'heatmap':
+        if isinstance(adjacency, csr_array):
+            # convert to dense for plotting
+            adjacency = adjacency.todense()
+        plot_adjacency = np.zeros_like(adjacency)
+        plot_adjacency[sources, targets] = data
+        sns.heatmap(
+            plot_adjacency,
+            # cmap=edge_palette,
+            xticklabels=False,
+            yticklabels=False,
+            vmin=hue_norm[0] if hue_norm else None,
+            vmax=hue_norm[1] if hue_norm else None,
+            ax=ax,
+            square=True,
+            cbar_kws={"label": "Synapse count", "shrink": 0.5},
+            **kwargs,
+        )
+    elif plot_type == 'scattermap':
+        sns.scatterplot(
+            y=sources,
+            x=targets,
+            size=size,
+            hue=hue,
+            hue_norm=hue_norm,
+            ax=ax,
+            sizes=sizes,
+            palette=edge_palette,
+            linewidth=edge_linewidth,
+            color="black",
+            **kwargs,
+        )
+        if hue is not None or size is not None:
+            sns.move_legend(
+                ax,
+                "upper left",
+                bbox_to_anchor=(1, 1),
+                title="Edge weight",
+                fontsize=label_fontsize,
+                # markerscale=10,
+            )
 
     if adjacency.shape[0] == adjacency.shape[1]:
         ax.axis("square")
@@ -500,3 +530,39 @@ def adjacencyplot(
         draw_label_arc(ax, *arc_labels)
 
     return ax, grid
+
+
+# NOTE: this was the code for generating the palette in Workshop1.ipynb
+# node_hue = "cell_type"
+# n_e_classes = len(proof_cell_df.query("cell_type_coarse == 'E'")[node_hue].unique())
+# n_i_classes = len(proof_cell_df.query("cell_type_coarse == 'I'")[node_hue].unique())
+# e_colors = sns.cubehelix_palette(
+#     start=0.4, rot=0.3, light=0.85, hue=1.0, dark=0.4, gamma=1.3, n_colors=n_e_classes
+# )
+# i_colors = sns.cubehelix_palette(
+#     start=0.3, rot=-0.4, light=0.75, dark=0.2, hue=1.0, gamma=1.3, n_colors=n_i_classes
+# )
+# cell_type_palette = dict(
+#     zip(
+#         proof_cell_df.sort_values(["cell_type_coarse", node_hue])[node_hue].unique(),
+#         e_colors + i_colors,
+#     )
+# )
+# cell_type_palette["E"] = np.array(list(e_colors)).mean(axis=0)
+# cell_type_palette["I"] = np.array(list(i_colors)).mean(axis=0)
+cell_type_palette = {
+    "L2-IT": [0.9075666881074735, 0.7831311441799196, 0.6949858653492867],
+    "L3-IT": [0.8708834148859907, 0.6888410680873137, 0.6022311567741945],
+    "L4-IT": [0.8274067443395999, 0.5906550752430283, 0.5233409192850811],
+    "L5-ET": [0.7795806757764551, 0.5022849626842287, 0.4643377130216367],
+    "L5-IT": [0.719621740596695, 0.41459615740890743, 0.41383679416754976],
+    "L5-NP": [0.6539490167887168, 0.3392197573102502, 0.37390086854124416],
+    "L6-CT": [0.5747615524284997, 0.26764431745066686, 0.3354259029195752],
+    "L6-IT": [0.4927058890394963, 0.20865645456553394, 0.299493097642672],
+    "DTC": [0.5054276262176057, 0.7742578554634272, 0.7550447895194092],
+    "ITC": [0.307398668309227, 0.535864603420623, 0.6514437955029915],
+    "PTC": [0.21347879954025112, 0.2909729895091856, 0.47951242239001035],
+    "STC": [0.12751763609942932, 0.10157769757635066, 0.2292792004813278],
+    "E": [0.72830947, 0.47437862, 0.46344404],
+    "I": [0.28845568, 0.42566829, 0.52882005],
+}
